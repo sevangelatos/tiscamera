@@ -112,3 +112,27 @@ install(TARGETS tcam
   LIBRARY
   DESTINATION "${TCAM_INSTALL_LIB}"
   COMPONENT tcam)
+
+install(FILES 
+  "base_types.h"
+  "CaptureDevice.h"
+  "compiler_defines.h"
+  "DeviceIndex.h"
+  "DeviceInfo.h"
+  "image_fourcc.h"
+  "ImageSink.h"
+  "MemoryBuffer.h"
+  "Properties.h"
+  "Property.h"
+  "property_identifications.h"
+  "PropertyImpl.h"
+  "public_utils.h"
+  "SinkInterface.h"
+  "standard_properties.h"
+  "tcam.h"
+  "version.h"
+  "VideoFormatDescription.h"
+  "VideoFormat.h"
+  DESTINATION ${TCAM_INSTALL_INCLUDE}/tcam
+  COMPONENT tcam)
+

@@ -84,7 +84,7 @@ if (BUILD_V4L2)
 endif (BUILD_V4L2)
 
 set(TCAM_INSTALL_LIB "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "library installation path" FORCE)
-set(TCAM_INSTALL_INCLUDE "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "header installation path" FORCE)
+set(TCAM_INSTALL_INCLUDE "${CMAKE_INSTALL_PREFIX}/include/tcam" CACHE PATH "header installation path" FORCE)
 set(TCAM_INSTALL_BIN "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "binary installation path" FORCE)
 set(TCAM_INSTALL_UDEV "/usr/lib/udev/rules.d" CACHE PATH "udev rules installation path")
 set(TCAM_INSTALL_UVCDYNCTRL "/usr/share/uvcdynctrl/data/199e" CACHE PATH "uvcdynctrl rules installation path")
