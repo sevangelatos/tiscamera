@@ -68,7 +68,7 @@ void list_gstreamer_1_0_formats (const std::vector<VideoFormatDescription>& avai
         // use a regex to insert line breaks for increased readability
         std::regex e ("; ");
         std::cout << "Available gstreamer-1.0 caps:" << std::endl;
-        std::cout << std::regex_replace(str, e, ";\n") << std::endl;
+        std::cout << std::regex_replace(str, e, std::string(";\n") ) << std::endl;
     }
     else
     {
