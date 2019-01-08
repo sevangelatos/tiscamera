@@ -216,6 +216,8 @@ private:
     bool is_stream_on;
     struct tcam_stream_statistics statistics;
     size_t current_buffer;
+    uint32_t previous_sequence;
+    bool previous_sequence_valid;
 
     struct buffer_info
     {

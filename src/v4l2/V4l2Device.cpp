@@ -32,6 +32,7 @@
 #include <linux/videodev2.h>
 #include <cstring>              /* memcpy*/
 #include <libudev.h>
+#include <stdio.h>
 
 using namespace tcam;
 
@@ -52,7 +53,6 @@ std::vector<double> V4l2Device::V4L2FormatHandler::get_framerates(const struct t
 
 static const unsigned char lost_countdown_default = 5;
 
-
 V4l2Device::V4l2Device (const DeviceInfo& device_desc)
     : emulate_bayer(false),
       emulated_fourcc(0),
@@ -61,7 +61,9 @@ V4l2Device::V4l2Device (const DeviceInfo& device_desc)
       stop_all(false),
       device_is_lost(false),
       abort_all(false),
-      is_stream_on(false)
+      is_stream_on(false),
+      previous_sequence(0),
+      previous_sequence_valid(false)
 {
     device = device_desc;
 
@@ -1547,7 +1549,33 @@ bool V4l2Device::get_frame ()
     // v4l2 timestamps contain seconds and microseconds
     // here they are converted to nanoseconds
     statistics.capture_time_ns = ((long long)buf.timestamp.tv_sec * 1000 * 1000 * 1000) + (buf.timestamp.tv_usec * 1000);
-    statistics.frame_count++;
+
+    uint64_t sequence_step = 1;
+
+    if (previous_sequence_valid) {
+      if (buf.sequence >= previous_sequence) {
+        sequence_step = buf.sequence - previous_sequence;
+      }
+      else {
+        // sequence has overflowed so extend it to find the actual step.
+        sequence_step = (static_cast<uint64_t>(buf.sequence) + (1ull << 32)) - static_cast<uint64_t>(previous_sequence);
+      }
+    }
+
+    previous_sequence = buf.sequence;
+    previous_sequence_valid = true;
+    statistics.frame_count += sequence_step;
+
+    /*
+    fprintf(stderr, "%s:idx:%d sq:%d frame_c:%lu dropped:%lu frames:%u\n",
+           device.get_identifier().c_str(), buf.index,
+           buf.sequence, statistics.frame_count,
+           statistics.frames_dropped, buf.timecode.frames);
+    */
+
+
+//    statistics.camera_time_ns = buf.index + buf.sequence + buf.timecode;
+
     buffers.at(buf.index).buffer->set_statistics(statistics);
 
     auto desc = buffers.at(buf.index).buffer->getImageBuffer();
