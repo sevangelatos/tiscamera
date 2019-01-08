@@ -1374,7 +1374,10 @@ wait_again:
         goto wait_again;
     }
 
-    std::shared_ptr<tcam::MemoryBuffer> ptr = self->device->queue.front();
+    std::shared_ptr<tcam::MemoryBuffer> shared_ptr;
+    std::swap(shared_ptr, self->device->queue.front());
+
+    tcam::MemoryBuffer *ptr = shared_ptr.get();
     ptr->set_user_data(self);
 
     /* TODO: check why aravis throws an incomplete buffer error
@@ -1388,18 +1391,19 @@ wait_again:
 
     destroy_transfer* trans = new(destroy_transfer);
     trans->self = self;
-    trans->ptr = ptr;
+    trans->ptr = shared_ptr;
 
     *buffer = gst_buffer_new_wrapped_full(static_cast<GstMemoryFlags>(0), ptr->get_data(), ptr->get_buffer_size(),
                                           0, ptr->get_image_size(), trans, buffer_destroy_callback);
 
     self->device->queue.pop(); // remove buffer from queue
 
-    // GST_DEBUG("Framerate according to source: %f", self->ptr->statistics.framerate);
-    /*
+    // GST_DEBUG("Framerate according to source: %f", ptr->statistics.framerate);
     if (gst_base_src_get_do_timestamp(GST_BASE_SRC(push_src)))
     {
-        timestamp_ns = self->ptr->statistics.capture_time_ns;
+        tcam_stream_statistics statistics = ptr->get_statistics();
+        uint64_t timestamp_ns = statistics.capture_time_ns;
+
         GST_DEBUG("Timestamp(ns): %ld", timestamp_ns);
         if (self->timestamp_offset == 0)
         {
@@ -1408,12 +1412,14 @@ wait_again:
         }
 
         GST_BUFFER_DURATION(*buffer) = timestamp_ns - self->last_timestamp;
-        GST_BUFFER_PTS(*buffer) = timestamp_ns - self->timestamp_offset;
+        uint64_t pts = timestamp_ns - self->timestamp_offset;
+        GST_BUFFER_PTS(*buffer) = pts;
+        GST_BUFFER_DTS(*buffer) = pts;
+        GST_BUFFER_OFFSET(*buffer) = statistics.frame_count;
         // GST_DEBUG("duration %ld", timestamp_ns - self->last_timestamp);
         // GST_DEBUG("pts %ld", timestamp_ns - self->last_timestamp);
         self->last_timestamp = timestamp_ns;
     }
-    */
     GST_LOG("Pushing buffer...");
 
     if (self->n_buffers != 0)
