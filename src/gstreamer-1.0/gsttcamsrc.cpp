@@ -18,6 +18,7 @@
 
 #include "tcamgstbase.h"
 #include "tcamgststrings.h"
+#include "mrx_mcv/steganography.h"
 
 #include "tcamprop.h"
 #include "tcam.h"
@@ -1347,6 +1348,12 @@ static void gst_tcam_src_sh_callback (std::shared_ptr<tcam::MemoryBuffer> buffer
     self->cv.notify_all();
 }
 
+static bool EncodeExtraData(tcam::MemoryBuffer *ptr) {
+  using namespace mrx::mcv;
+  ExtraData extra;
+  extra.frame_count = ptr->get_statistics().frame_count;
+  return SteganographyEncodeData(ptr->get_data(), ptr->get_image_size(), extra);
+}
 
 static GstFlowReturn gst_tcam_src_create (GstPushSrc* push_src,
                                           GstBuffer** buffer)
@@ -1392,6 +1399,9 @@ wait_again:
     destroy_transfer* trans = new(destroy_transfer);
     trans->self = self;
     trans->ptr = shared_ptr;
+
+    // Steganographically encode extra data on the image.
+    EncodeExtraData(ptr);
 
     *buffer = gst_buffer_new_wrapped_full(static_cast<GstMemoryFlags>(0), ptr->get_data(), ptr->get_buffer_size(),
                                           0, ptr->get_image_size(), trans, buffer_destroy_callback);
